@@ -1,24 +1,29 @@
+import copy
+
 import tcod
 
 from engine import Engine
-from entity import Entity
+import entity_factories
 from input_handlers import EventHandler
 from procgen import generate_dungeon
 
 def main() -> None:
 
     #Size of Window
-    screen_width = 100
-    screen_height = 70
+    screen_width = 80
+    screen_height = 50
 
     #Size of game map
-    map_width = 100
-    map_height = 65
+    map_width = 80
+    map_height = 45
 
     #Range of size of room and max rooms in a level
-    room_max_size = 15
-    room_min_size = 10
+    room_max_size = 10
+    room_min_size = 6
     max_rooms = 30
+
+    #Maximum amount of monsters
+    max_monsters_per_room = 3
 
     #Tileset for icons, player, npc etc.
     tileset = tcod.tileset.load_tilesheet(
@@ -29,9 +34,7 @@ def main() -> None:
     event_handler = EventHandler()
 
     #Initialise entities
-    player = Entity(int(screen_width / 2), int(screen_height / 2), "#", (255, 50, 50))
-    npc = Entity(int(screen_width / 2 - 5), int(screen_height / 2), "@", (255, 255, 0))
-    entities = {npc, player}
+    player = copy.deepcopy(entity_factories.player)
 
     #Initialise map
     game_map = generate_dungeon(
@@ -40,11 +43,12 @@ def main() -> None:
         room_max_size=room_max_size,
         map_width=map_width,
         map_height=map_height,
+        max_monsters_per_room=max_monsters_per_room,
         player=player
     )
 
     #Initialise Engine
-    engine = Engine(entities= entities, event_handler= event_handler, game_map= game_map, player= player)
+    engine = Engine(event_handler= event_handler, game_map= game_map, player= player)
 
     #start window
     with tcod.context.new_terminal(
