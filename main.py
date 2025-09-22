@@ -8,16 +8,16 @@ from procgen import generate_dungeon
 def main() -> None:
 
     #Size of Window
-    screen_width = 80
-    screen_height = 50
+    screen_width = 100
+    screen_height = 70
 
     #Size of game map
-    map_width = 80
-    map_height = 45
+    map_width = 100
+    map_height = 65
 
     #Range of size of room and max rooms in a level
-    room_max_size = 10
-    room_min_size = 6
+    room_max_size = 15
+    room_min_size = 10
     max_rooms = 30
 
     #Tileset for icons, player, npc etc.
@@ -29,7 +29,7 @@ def main() -> None:
     event_handler = EventHandler()
 
     #Initialise entities
-    player = Entity(int(screen_width / 2), int(screen_height / 2), "@", (255, 255, 255))
+    player = Entity(int(screen_width / 2), int(screen_height / 2), "#", (255, 50, 50))
     npc = Entity(int(screen_width / 2 - 5), int(screen_height / 2), "@", (255, 255, 0))
     entities = {npc, player}
 
