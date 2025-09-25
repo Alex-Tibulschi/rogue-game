@@ -1,14 +1,18 @@
 from __future__ import annotations
+
 import random
-from typing import Iterator, Tuple, TYPE_CHECKING, List
+from typing import Iterator, List, Tuple, TYPE_CHECKING
+
 import tcod
 
+import entity_factories
 from game_map import GameMap
 import tile_types
-import entity_factories
+
 
 if TYPE_CHECKING:
-    from entity import Entity
+    from engine import Engine
+
 
 class RectangularRoom:
     def __init__(self, x: int, y: int, width: int, height: int):
@@ -30,8 +34,7 @@ class RectangularRoom:
         return slice(self.x1 + 1, self.x2), slice(self.y1 + 1, self.y2)
 
     def intersects(self, other: RectangularRoom) -> bool:
-        """Return True if this room overlaps with another RectangularRoom"""
-
+        """Return True if this room overlaps with another RectangularRoom."""
         return (
             self.x1 <= other.x2
             and self.x2 >= other.x1
@@ -39,10 +42,10 @@ class RectangularRoom:
             and self.y2 >= other.y1
         )
 
+
 def place_entities(
     room: RectangularRoom, dungeon: GameMap, maximum_monsters: int,
 ) -> None:
-    """Place entities into the dungeon"""
     number_of_monsters = random.randint(0, maximum_monsters)
 
     for i in range(number_of_monsters):
@@ -55,26 +58,26 @@ def place_entities(
             else:
                 entity_factories.troll.spawn(dungeon, x, y)
 
-def tunnel_between(start: Tuple[int, int], end: Tuple[int, int]) -> Iterator[Tuple[int, int]]:
-    """Return an L-shaped tunnel between these two points"""
 
+def tunnel_between(
+    start: Tuple[int, int], end: Tuple[int, int]
+) -> Iterator[Tuple[int, int]]:
+    """Return an L-shaped tunnel between these two points."""
     x1, y1 = start
     x2, y2 = end
-
-    if random.random() < 0.5: #50% chance
-        #Move horizontally, then vertically
+    if random.random() < 0.5:  # 50% chance.
+        # Move horizontally, then vertically.
         corner_x, corner_y = x2, y1
-    
     else:
-        #Move vertically, then horizontally
+        # Move vertically, then horizontally.
         corner_x, corner_y = x1, y2
 
-    #Generate the coordinates for the tunnel
+    # Generate the coordinates for this tunnel.
     for x, y in tcod.los.bresenham((x1, y1), (corner_x, corner_y)).tolist():
         yield x, y
-
     for x, y in tcod.los.bresenham((corner_x, corner_y), (x2, y2)).tolist():
         yield x, y
+
 
 def generate_dungeon(
     max_rooms: int,
@@ -83,10 +86,11 @@ def generate_dungeon(
     map_width: int,
     map_height: int,
     max_monsters_per_room: int,
-    player: Entity,
+    engine: Engine,
 ) -> GameMap:
     """Generate a new dungeon map."""
-    dungeon = GameMap(map_width, map_height, entities=[player])
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player])
 
     rooms: List[RectangularRoom] = []
 
@@ -110,16 +114,15 @@ def generate_dungeon(
 
         if len(rooms) == 0:
             # The first room, where the player starts.
-            player.x, player.y = new_room.center
+            player.place(*new_room.center, dungeon)
         else:  # All rooms after the first.
             # Dig out a tunnel between this room and the previous one.
             for x, y in tunnel_between(rooms[-1].center, new_room.center):
                 dungeon.tiles[x, y] = tile_types.floor
 
-        #Place entities in the room
         place_entities(new_room, dungeon, max_monsters_per_room)
 
         # Finally, append the new room to the list.
         rooms.append(new_room)
 
-    return dungeon 
+    return dungeon
